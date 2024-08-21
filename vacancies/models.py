@@ -1,11 +1,8 @@
 import uuid
-
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-
-from users.models import Band
-from vacancies.utils import ChoiceArrayField
+from bands.models import Band
 
 
 class VacancyManager(models.Manager):
@@ -14,7 +11,7 @@ class VacancyManager(models.Manager):
 
 
 class Vacancy(models.Model):
-    created_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,  verbose_name="Автор")
+    created_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, verbose_name="Автор")
     description = models.TextField(max_length=1000, null=True, blank=True, verbose_name="Описание")
     uuid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -50,11 +47,20 @@ GENRES = [
 ]
 
 
-class BaseMusicVacancy(Vacancy):
+class FavouritesMixin(models.Model):
+    favourites = models.ManyToManyField(
+        get_user_model(),
+        related_name="%(class)s_favourites",
+        blank=True,
+        verbose_name="Избранное"
+    )
+
+    class Meta:
+        abstract = True
 
 
-
-    genres = ArrayField(models.CharField(max_length=50, choices=GENRES), size=3, default=list ,verbose_name="Жанры")
+class BaseMusicVacancy(Vacancy, FavouritesMixin):
+    genres = ArrayField(models.CharField(max_length=50, choices=GENRES), size=3, default=list, verbose_name="Жанры")
     level = models.CharField(choices=SKILL_LEVELS, max_length=50, verbose_name="Уровень игры")
     city = models.CharField(max_length=50, verbose_name="Город")
     contacts = ArrayField(models.CharField(max_length=100), size=3, verbose_name="Контакты")
@@ -64,8 +70,6 @@ class BaseMusicVacancy(Vacancy):
 
 
 class MusicianVacancy(BaseMusicVacancy):
-
-
     instruments = ArrayField(
         models.CharField(max_length=50, choices=INSTRUMENTS),
         size=3,
@@ -79,7 +83,8 @@ class MusicianVacancy(BaseMusicVacancy):
 
 
 class BandVacancy(BaseMusicVacancy):
-    created_by = models.OneToOneField(Band, on_delete=models.CASCADE, related_name='band_vacancy', verbose_name="Группа")
+    created_by = models.OneToOneField(Band, on_delete=models.CASCADE, related_name='band_vacancy',
+                                      verbose_name="Группа")
     instrument = models.CharField(max_length=50, choices=INSTRUMENTS, verbose_name="Инструмент")
     genres = models.CharField(max_length=50, choices=GENRES, verbose_name="Жанр")
 
@@ -91,15 +96,15 @@ class BandVacancy(BaseMusicVacancy):
         return f'{self.created_by.name} want to find - {str(self.instrument).capitalize()} player'
 
 
-class OrganizerVacancy(Vacancy):
+class OrganizerVacancy(Vacancy, FavouritesMixin):
     title = models.CharField(max_length=255, verbose_name="Название")
     event_type = models.CharField(max_length=255, verbose_name="Тип мероприятия")
     address = models.CharField(max_length=255, verbose_name="Адрес мероприятия")
     event_datetime = models.DateTimeField(verbose_name="Время мероприятия")
 
     class Meta:
-        verbose_name = "Объявление организотора"
-        verbose_name_plural = "Объявления организоторов"
+        verbose_name = "Объявление организатора"
+        verbose_name_plural = "Объявления организаторов"
 
     def __str__(self):
         return self.title

@@ -1,5 +1,4 @@
 from django.contrib import admin
-from django import forms
 
 from vacancies.forms import MusicianVacancyForm, BandVacancyForm
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy

@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 
-from users.models import Band
 
 
 class UserAdmin(admin.ModelAdmin):
@@ -11,4 +10,3 @@ class UserAdmin(admin.ModelAdmin):
 
 
 admin.register(get_user_model(), UserAdmin)
-admin.site.register(Band)

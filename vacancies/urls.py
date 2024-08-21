@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import VacancyListView, VacancyItemView
+from rest_framework.routers import SimpleRouter
 
+from .views import VacancyListView, VacancyItemView
 
 
 urlpatterns = [
