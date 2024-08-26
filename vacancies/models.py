@@ -37,8 +37,8 @@ SKILL_LEVELS = [
 ]
 
 GENRES = [
-    ('Rock', 'Rock'),
-    ('Pop', 'Pop'),
+    ('rock', 'Rock'),
+    ('pop', 'Pop'),
     ('jazz', 'Jazz'),
     ('classical', 'Classical'),
     ('metal', 'Metal'),

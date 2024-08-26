@@ -5,8 +5,19 @@ from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from rest_framework import serializers
 from .models import MusicianVacancy, BandVacancy, OrganizerVacancy
 
+class FavoriteVacancySerializer(serializers.Serializer):
 
-class VacanciesUniversalSerializer(serializers.Serializer):
+    def to_representation(self, obj):
+        if isinstance(obj, MusicianVacancy):
+            print()
+            return MusicianVacancySerializer(obj).data
+        elif isinstance(obj, BandVacancy):
+            return BandVacancySerializer(obj).data
+        elif isinstance(obj, OrganizerVacancy):
+            return OrganizerVacancySerializer(obj).data
+        return super().to_representation(obj)
+
+class VacanciesBaseSerializer(serializers.Serializer):
 
     def to_representation(self, obj):
         if isinstance(obj, MusicianVacancy):
@@ -28,6 +39,7 @@ class BandVacancySerializer(serializers.ModelSerializer):
     class Meta:
         model = BandVacancy
         fields = '__all__'
+
 
 
 class OrganizerVacancySerializer(serializers.ModelSerializer):

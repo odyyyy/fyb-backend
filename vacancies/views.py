@@ -1,15 +1,21 @@
 from django.db.models import QuerySet
 from rest_framework.exceptions import NotFound
-from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
 
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from vacancies.serializers import MusicianVacancySerializer, BandVacancySerializer, OrganizerVacancySerializer, \
-    VacanciesUniversalSerializer
+    VacanciesBaseSerializer
 from itertools import chain
 
 
-class VacancyListView(ListAPIView):
-    serializer_class = VacanciesUniversalSerializer
+
+class VacancyViewSet(ModelViewSet):
+    serializer_class = VacanciesBaseSerializer
+    permission_classes = [IsAuthenticated, ]
+    lookup_field = 'uuid'
 
     def get_queryset(self):
         match self.request.query_params.get('q'):
@@ -24,11 +30,6 @@ class VacancyListView(ListAPIView):
                                   BandVacancy.objects.all(),
                                   OrganizerVacancy.objects.all()))
 
-
-class VacancyItemView(RetrieveAPIView):
-    serializer_class = VacanciesUniversalSerializer
-    lookup_field = 'uuid'
-
     def get_object(self):
         uuid = self.kwargs.get('uuid')
         try:
@@ -41,3 +42,24 @@ class VacancyItemView(RetrieveAPIView):
                     return OrganizerVacancy.objects.get(uuid=uuid)
                 except OrganizerVacancy.DoesNotExist:
                     raise NotFound("No vacancy matches the given uuid.")
+
+    def create(self, request, *args, **kwargs):
+        vacancy_data = request.data
+
+        if 'type' in vacancy_data:
+            match vacancy_data['type']:
+                case 'musician':
+                    return self.create_vacancy(MusicianVacancySerializer, vacancy_data)
+                case 'band':
+                    return self.create_vacancy(BandVacancySerializer, vacancy_data)
+                case 'organizer':
+                    return self.create_vacancy(OrganizerVacancySerializer, vacancy_data)
+
+    def create_vacancy(self, serializer_class, vacancy_data):
+        serializer = serializer_class(data=vacancy_data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=201)
+        else:
+            return Response(serializer.errors, status=400)
+

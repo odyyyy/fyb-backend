@@ -15,9 +15,7 @@ DEBUG = os.getenv('DEBUG') == 'True'
 
 ALLOWED_HOSTS = []
 INTERNAL_IPS = [
-    # ...
     "127.0.0.1",
-    # ...
 ]
 
 INSTALLED_APPS = [
@@ -27,10 +25,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
+    # apps
     'users',
     'vacancies',
     'bands',
+    # 3rd party
+    'rest_framework',
     "debug_toolbar",
 ]
 
