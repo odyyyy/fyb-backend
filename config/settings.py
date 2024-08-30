@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'users',
     'vacancies',
     'bands',
+    'news',
     # 3rd party
     'rest_framework',
     "debug_toolbar",

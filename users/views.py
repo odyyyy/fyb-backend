@@ -2,16 +2,51 @@ from itertools import chain
 from rest_framework import mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from django.http import Http404
+from django.db.models import QuerySet
 
+from bands.models import Band
+from users.permissions import AuthorPermission
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from vacancies.serializers import VacanciesBaseSerializer
+
+class UsersVacancyView(mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin,
+                       mixins.DestroyModelMixin,
+                       viewsets.GenericViewSet):
+    serializer_class = VacanciesBaseSerializer
+    permission_classes = [IsAuthenticated, AuthorPermission]
+    lookup_field = 'uuid'
+
+    def get_queryset(self):
+        user = self.request.user
+
+        musician_vacancies = MusicianVacancy.objects.filter(created_by=user)
+        organizer_vacancies = OrganizerVacancy.objects.filter(created_by=user)
+
+        try:
+            band = Band.objects.get(leader=user)
+            band_vacancies = BandVacancy.objects.filter(created_by=band)
+        except Band.DoesNotExist:
+            band_vacancies = BandVacancy.objects.none()
+
+        return chain(musician_vacancies, organizer_vacancies, band_vacancies)
+
+    def get_object(self):
+        uuid = self.kwargs.get('uuid')
+        for obj in self.get_queryset():
+            if str(obj.uuid) == uuid:
+                return obj
+
+        raise Http404("Object with this UUID does not exist")
+
+
 
 
 class UserFavouritesView(mixins.ListModelMixin,
                          mixins.CreateModelMixin,
                          mixins.DestroyModelMixin,
                          viewsets.GenericViewSet):
-
     serializer_class = VacanciesBaseSerializer
     permission_classes = [IsAuthenticated, ]
 
@@ -33,48 +68,9 @@ class UserFavouritesView(mixins.ListModelMixin,
     def destroy(self, request, *args, **kwargs):
         uuid = self.kwargs.get('uuid')
         vacancy = MusicianVacancy.objects.filter(uuid=uuid).union(
-                BandVacancy.objects.filter(uuid=uuid),
-                OrganizerVacancy.objects.filter(uuid=uuid))
+            BandVacancy.objects.filter(uuid=uuid),
+            OrganizerVacancy.objects.filter(uuid=uuid))
 
         if len(vacancy) != 0:
             vacancy[0].favourites.remove(request.user)
 
-
-
-
-
-
-# class UserFavouriteCreateDestroyView(mixins.DestroyModelMixin,
-#                                mixins.CreateModelMixin,
-#                                generics.GenericAPIView):
-#
-#     permission_classes = [IsAuthenticated, ]
-#
-#     def create(self, request, *args, **kwargs):
-#         uuid = kwargs.get('uuid')
-#         musician_vacancy = MusicianVacancy.objects.filter(uuid=uuid)
-#         if musician_vacancy.exists() and not (musician_vacancy.favourites.filter(id=request.user.id).exists()):
-#             musician_vacancy.first().favourites.add(request.user)
-#
-#         elif BandVacancy.objects.filter(uuid=uuid).exists() and not (BandVacancy.objects.filter(uuid=uuid).favourites.filter(id=request.user.id).exists()):
-#             BandVacancy.objects.filter(uuid=uuid).first().favourites.add(request.user)
-#
-#         elif OrganizerVacancy.objects.filter(uuid=uuid).exists() and not (OrganizerVacancy.objects.filter(uuid=uuid).favourites.filter(id=request.user.id).exists()):
-#             OrganizerVacancy.objects.filter(uuid=uuid).first().favourites.add(request.user)
-#
-#
-#         return self.create(request, *args, **kwargs)
-#
-#     def destroy(self, request, *args, **kwargs):
-#         uuid = kwargs.get('uuid')
-#         musician_vacancy = MusicianVacancy.objects.filter(uuid=uuid)
-#         if musician_vacancy.exists() and musician_vacancy.favourites.filter(id=request.user.id).exists():
-#             musician_vacancy.first().favourites.remove(request.user)
-#
-#         elif BandVacancy.objects.filter(uuid=uuid).exists() and BandVacancy.objects.filter(uuid=uuid).favourites.filter(id=request.user.id).exists():
-#             BandVacancy.objects.filter(uuid=uuid).first().favourites.remove(request.user)
-#
-#         elif OrganizerVacancy.objects.filter(uuid=uuid).exists() and OrganizerVacancy.objects.filter(uuid=uuid).favourites.filter(id=request.user.id).exists():
-#             OrganizerVacancy.objects.filter(uuid=uuid).first().favourites.remove(request.user)
-#
-#         return self.destroy(request, *args, **kwargs)

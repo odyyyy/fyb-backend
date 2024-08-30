@@ -1,9 +1,8 @@
-from django.db.models import QuerySet
+from rest_framework import mixins
 from rest_framework.exceptions import NotFound
-from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from vacancies.serializers import MusicianVacancySerializer, BandVacancySerializer, OrganizerVacancySerializer, \
@@ -11,11 +10,13 @@ from vacancies.serializers import MusicianVacancySerializer, BandVacancySerializ
 from itertools import chain
 
 
-
-class VacancyViewSet(ModelViewSet):
+class VacancyViewSet(mixins.CreateModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.ListModelMixin,
+                     GenericViewSet):
     serializer_class = VacanciesBaseSerializer
-    permission_classes = [IsAuthenticated, ]
     lookup_field = 'uuid'
+    permission_classes = [IsAuthenticatedOrReadOnly, ]
 
     def get_queryset(self):
         match self.request.query_params.get('q'):
@@ -26,25 +27,20 @@ class VacancyViewSet(ModelViewSet):
             case 'organizers':
                 return OrganizerVacancy.objects.all()
             case _:
-                return list(chain(MusicianVacancy.objects.all(),
-                                  BandVacancy.objects.all(),
-                                  OrganizerVacancy.objects.all()))
+                return chain(MusicianVacancy.objects.all(),
+                             BandVacancy.objects.all(),
+                             OrganizerVacancy.objects.all())
 
     def get_object(self):
         uuid = self.kwargs.get('uuid')
-        try:
-            return MusicianVacancy.objects.get(uuid=uuid)
-        except MusicianVacancy.DoesNotExist:
-            try:
-                return BandVacancy.objects.get(uuid=uuid)
-            except BandVacancy.DoesNotExist:
-                try:
-                    return OrganizerVacancy.objects.get(uuid=uuid)
-                except OrganizerVacancy.DoesNotExist:
-                    raise NotFound("No vacancy matches the given uuid.")
+        vacancies_qs = self.get_queryset()
+        for vacancy_obj in vacancies_qs:
+            if str(vacancy_obj.uuid) == uuid:
+                return vacancy_obj
 
     def create(self, request, *args, **kwargs):
         vacancy_data = request.data
+
 
         if 'type' in vacancy_data:
             match vacancy_data['type']:
@@ -62,4 +58,3 @@ class VacancyViewSet(ModelViewSet):
             return Response(serializer.data, status=201)
         else:
             return Response(serializer.errors, status=400)
-

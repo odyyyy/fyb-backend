@@ -8,4 +8,5 @@ urlpatterns = [
                   path('vacancies/', include('vacancies.urls')),
                   path('bands/', include('bands.urls')),
                   path('users/', include('users.urls')),
+                  path('news/', include('news.urls')),
               ] + debug_toolbar_urls()
