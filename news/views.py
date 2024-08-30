@@ -1,10 +1,7 @@
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.response import Response
 from rest_framework.views import APIView
 
-import json
-
-from news.services import check_new_actual_news, parse_actual_news, get_actual_news, get_news_item
-from rest_framework.response import Response
+from news.services import check_new_actual_news, get_actual_news, get_news_item
 
 
 class NewsListView(APIView):

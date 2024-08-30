@@ -1,13 +1,12 @@
 from itertools import chain
 from rest_framework import mixins, viewsets
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
-from rest_framework.response import Response
+from rest_framework.generics import RetrieveAPIView
 from django.http import Http404
-from django.db.models import QuerySet
 
 from bands.models import Band
 from users.permissions import AuthorPermission
+from users.serializers import UserProfileSerializer
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from vacancies.serializers import VacanciesBaseSerializer
 
@@ -74,3 +73,9 @@ class UserFavouritesView(mixins.ListModelMixin,
         if len(vacancy) != 0:
             vacancy[0].favourites.remove(request.user)
 
+class UserProfileView(RetrieveAPIView):
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def get_object(self):
+        return self.request.user

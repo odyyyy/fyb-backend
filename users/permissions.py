@@ -7,7 +7,6 @@ from django.shortcuts import get_object_or_404
 
 class AuthorPermission(BasePermission):
 
-
     def has_object_permission(self, request, view, obj):
         if isinstance(obj, MusicianVacancy) or isinstance(obj, OrganizerVacancy):
             return obj.created_by == request.user
