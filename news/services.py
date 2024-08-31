@@ -4,10 +4,15 @@ import requests
 from xml.dom.minidom import parseString, Document
 import json
 from django.utils.text import slugify
+from django.core.cache import cache
 
 NEWS_RSS_URL = "https://pitchfork.com/feed/feed-news/rss"
+NEWS_CACHE_KEY = 'news'
 
-def parse_actual_news(news_document: Document) -> None:
+
+def parse_actual_news() -> None:
+    rss_response = requests.get(NEWS_RSS_URL)
+    news_document = parseString(rss_response.content)
 
     news_items = news_document.getElementsByTagName("item")
     json_news = []
@@ -29,29 +34,22 @@ def parse_actual_news(news_document: Document) -> None:
             "image": image,
         })
 
-    with open('news_data.json', 'w') as file:
-        json.dump(json_news, file)
+    json_news.reverse()
+    cache.set(NEWS_CACHE_KEY, json_news, 60 * 60)
 
 
-def check_new_actual_news() -> None:
-    rss_response = requests.get(NEWS_RSS_URL)
-    news_document = parseString(rss_response.content)
-    last_news_title = news_document.getElementsByTagName("item")[0].getElementsByTagName("title")[0].firstChild.data
-
-    with open('news_data.json', 'r') as file:
-        news_data = json.load(file)
-        if news_data[0]['title'] != last_news_title:
-            parse_actual_news(news_document)
+def get_news_item(slug: str) -> dict:
+    news_data = cache.get(NEWS_CACHE_KEY)
+    if news_data is not None:
+        for item in news_data:
+            if item['slug'] == slug:
+                return item
 
 
 def get_actual_news() -> list:
-    with open('news_data.json', 'r') as file:
-        news_data = json.load(file)
+    news_data = cache.get(NEWS_CACHE_KEY)
+    if news_data is not None:
         return news_data
+    parse_actual_news()
+    get_actual_news()
 
-def get_news_item(slug: str) -> dict:
-    with open('news_data.json', 'r') as file:
-        news_data = json.load(file)
-        for news_item in news_data:
-            if news_item['slug'] == slug:
-                return news_item

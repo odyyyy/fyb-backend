@@ -1,13 +1,15 @@
+from itertools import chain
+
 from rest_framework import mixins
-from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.viewsets import GenericViewSet
 
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from vacancies.serializers import MusicianVacancySerializer, BandVacancySerializer, OrganizerVacancySerializer, \
     VacanciesBaseSerializer
-from itertools import chain
+from vacancies.services import create_vacancy
+from vacancies.utils import StandartVacancyPagination
+from django.core.cache import cache
 
 
 class VacancyViewSet(mixins.CreateModelMixin,
@@ -15,21 +17,26 @@ class VacancyViewSet(mixins.CreateModelMixin,
                      mixins.ListModelMixin,
                      GenericViewSet):
     serializer_class = VacanciesBaseSerializer
-    lookup_field = 'uuid'
-    permission_classes = [IsAuthenticatedOrReadOnly, ]
+    # permission_classes = [IsAuthenticatedOrReadOnly, ]
 
     def get_queryset(self):
-        match self.request.query_params.get('q'):
-            case 'musicians':
-                return MusicianVacancy.objects.all()
-            case 'bands':
-                return BandVacancy.objects.all()
-            case 'organizers':
-                return OrganizerVacancy.objects.all()
-            case _:
-                return chain(MusicianVacancy.objects.all(),
-                             BandVacancy.objects.all(),
-                             OrganizerVacancy.objects.all())
+        if self.request.user.is_authenticated:
+            match self.request.query_params.get('q'):
+                case 'musicians':
+                    return MusicianVacancy.objects.all()
+                case 'bands':
+                    return BandVacancy.objects.all()
+                case 'organizers':
+                    return OrganizerVacancy.objects.all()
+                case _:
+                    vacancies_cache = cache.get('vacancies_cache')
+                    if vacancies_cache is not None:
+                        return vacancies_cache
+                    vacancies = list(chain(MusicianVacancy.objects.all(),
+                                           BandVacancy.objects.all(),
+                                           OrganizerVacancy.objects.all()))
+                    cache.set('vacancies_cache', vacancies, 60 * 60)
+                    return vacancies
 
     def get_object(self):
         uuid = self.kwargs.get('uuid')
@@ -40,21 +47,11 @@ class VacancyViewSet(mixins.CreateModelMixin,
 
     def create(self, request, *args, **kwargs):
         vacancy_data = request.data
-
-
         if 'type' in vacancy_data:
             match vacancy_data['type']:
                 case 'musician':
-                    return self.create_vacancy(MusicianVacancySerializer, vacancy_data)
+                    return create_vacancy(MusicianVacancySerializer, vacancy_data)
                 case 'band':
-                    return self.create_vacancy(BandVacancySerializer, vacancy_data)
+                    return create_vacancy(BandVacancySerializer, vacancy_data)
                 case 'organizer':
-                    return self.create_vacancy(OrganizerVacancySerializer, vacancy_data)
-
-    def create_vacancy(self, serializer_class, vacancy_data):
-        serializer = serializer_class(data=vacancy_data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=201)
-        else:
-            return Response(serializer.errors, status=400)
+                    return create_vacancy(OrganizerVacancySerializer, vacancy_data)

@@ -25,14 +25,17 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 3rd party
+    'rest_framework',
+    "debug_toolbar",
+    'oauth2_provider',
+    'social_django',
+    'drf_social_oauth2',
     # apps
     'users',
     'vacancies',
     'bands',
     'news',
-    # 3rd party
-    'rest_framework',
-    "debug_toolbar",
 ]
 
 MIDDLEWARE = [
@@ -48,6 +51,27 @@ MIDDLEWARE = [
 
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'drf_social_oauth2.authentication.SocialAuthentication',
+    ),
+}
+
+# OAuth2
+
+AUTHENTICATION_BACKENDS = (
+    # GitHub OAuth2
+    'social_core.backends.github.GithubOAuth2',
+    # drf-social-oauth2
+    'drf_social_oauth2.backends.DjangoOAuth2',
+    # Django
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+SOCIAL_AUTH_GITHUB_KEY = "Ov23li8u56TDraWhXLnW"
+SOCIAL_AUTH_GITHUB_SECRET = "d92d11be70d889916c0e14f760c3d838b3c067ae"
+
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
@@ -61,6 +85,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
@@ -81,6 +107,24 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT'),
     }
 }
+
+# Cache
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379",
+        "OPTIONS": {
+            "db": "0",
+        },
+    }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
+SESSION_COOKIE_AGE = 1209600
+SESSION_SAVE_EVERY_REQUEST = False
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

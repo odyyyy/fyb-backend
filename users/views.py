@@ -4,6 +4,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.generics import RetrieveAPIView
 from django.http import Http404
 
+from django.shortcuts import render
+
+
 from bands.models import Band
 from users.permissions import AuthorPermission
 from users.serializers import UserProfileSerializer
@@ -79,3 +82,4 @@ class UserProfileView(RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+

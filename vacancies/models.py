@@ -14,6 +14,7 @@ class Vacancy(models.Model):
     created_by = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, verbose_name="Автор")
     description = models.TextField(max_length=1000, null=True, blank=True, verbose_name="Описание")
     uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
     class Meta:
         abstract = True

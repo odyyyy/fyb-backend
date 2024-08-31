@@ -1,12 +1,11 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from news.services import check_new_actual_news, get_actual_news, get_news_item
+from news.services import get_actual_news, get_news_item
 
 
 class NewsListView(APIView):
     def get(self, request):
-        check_new_actual_news()
         news_data = get_actual_news()
         return Response(news_data)
 
