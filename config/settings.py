@@ -28,9 +28,8 @@ INSTALLED_APPS = [
     # 3rd party
     'rest_framework',
     "debug_toolbar",
-    'oauth2_provider',
     'social_django',
-    'drf_social_oauth2',
+
     # apps
     'users',
     'vacancies',
@@ -51,33 +50,27 @@ MIDDLEWARE = [
 
 ]
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'drf_social_oauth2.authentication.SocialAuthentication',
-    ),
-}
+
 
 # OAuth2
 
 AUTHENTICATION_BACKENDS = (
-    # GitHub OAuth2
-    'social_core.backends.github.GithubOAuth2',
-    # drf-social-oauth2
-    'drf_social_oauth2.backends.DjangoOAuth2',
-    # Django
+
     'django.contrib.auth.backends.ModelBackend',
+    'social_core.backends.github.GithubOAuth2',
 )
 
-SOCIAL_AUTH_GITHUB_KEY = "Ov23li8u56TDraWhXLnW"
-SOCIAL_AUTH_GITHUB_SECRET = "d92d11be70d889916c0e14f760c3d838b3c067ae"
+SOCIAL_AUTH_JSONFIELD_ENABLED = True
+
+SOCIAL_AUTH_GITHUB_KEY = os.getenv('SOCIAL_AUTH_GITHUB_KEY')
+SOCIAL_AUTH_GITHUB_SECRET = os.getenv('SOCIAL_AUTH_GITHUB_SECRET')
 
 ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -168,3 +161,5 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Celery

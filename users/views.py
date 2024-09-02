@@ -83,3 +83,7 @@ class UserProfileView(RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
+
+
+def auth(request):
+    return render(request, 'oauth.html')
