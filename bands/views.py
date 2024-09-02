@@ -15,3 +15,4 @@ class BandAPIView(mixins.CreateModelMixin,
     queryset = Band.objects.all()
     serializer_class = BandSerializer
     permission_classes = (IsAuthenticated, BandLeaderPermission)
+
