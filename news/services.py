@@ -34,7 +34,6 @@ def parse_actual_news() -> None:
             "image": image,
         })
 
-    json_news.reverse()
     cache.set(NEWS_CACHE_KEY, json_news, 60 * 60)
 
 
@@ -51,5 +50,4 @@ def get_actual_news() -> list:
     if news_data is not None:
         return news_data
     parse_actual_news()
-    get_actual_news()
-
+    return cache.get(NEWS_CACHE_KEY)
