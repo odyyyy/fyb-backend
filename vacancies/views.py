@@ -17,26 +17,21 @@ class VacancyViewSet(mixins.CreateModelMixin,
                      mixins.ListModelMixin,
                      GenericViewSet):
     serializer_class = VacanciesBaseSerializer
-    # permission_classes = [IsAuthenticatedOrReadOnly, ]
+    permission_classes = [IsAuthenticatedOrReadOnly, ]
 
     def get_queryset(self):
-        if self.request.user.is_authenticated:
-            match self.request.query_params.get('q'):
-                case 'musicians':
-                    return MusicianVacancy.objects.all()
-                case 'bands':
-                    return BandVacancy.objects.all()
-                case 'organizers':
-                    return OrganizerVacancy.objects.all()
-                case _:
-                    vacancies_cache = cache.get('vacancies_cache')
-                    if vacancies_cache is not None:
-                        return vacancies_cache
-                    vacancies = list(chain(MusicianVacancy.objects.all(),
-                                           BandVacancy.objects.all(),
-                                           OrganizerVacancy.objects.all()))
-                    cache.set('vacancies_cache', vacancies, 60 * 60)
-                    return vacancies
+        query_type = self.request.query_params.get('q')
+        if query_type == 'musicians':
+            return MusicianVacancy.objects.with_related()
+        elif query_type == 'bands':
+            return BandVacancy.objects.with_related()
+        elif query_type == 'organizers':
+            return OrganizerVacancy.objects.with_related()
+        else:
+            musicians = MusicianVacancy.objects.with_related()
+            bands = BandVacancy.objects.with_related()
+            organizers = OrganizerVacancy.objects.with_related()
+            return chain(musicians, bands, organizers)
 
     def get_object(self):
         uuid = self.kwargs.get('uuid')

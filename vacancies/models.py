@@ -5,9 +5,9 @@ from django.db import models
 from bands.models import Band
 
 
-class VacancyManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset()
+class VacancyQuerySet(models.QuerySet):
+    def with_related(self):
+        return self.select_related('created_by').prefetch_related('favourites')
 
 
 class Vacancy(models.Model):
@@ -16,6 +16,7 @@ class Vacancy(models.Model):
     uuid = models.UUIDField(primary_key=True, db_index=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
+    objects = VacancyQuerySet.as_manager()
     class Meta:
         abstract = True
 
@@ -110,7 +111,3 @@ class OrganizerVacancy(Vacancy, FavouritesMixin):
     def __str__(self):
         return self.title
 
-
-class VacanciesQuerySet(models.QuerySet):
-    def get_queryset(self):
-        return super().get_queryset()
