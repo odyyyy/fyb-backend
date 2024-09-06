@@ -93,9 +93,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'NAME': os.getenv('POSTGRES_DB'),
+        'USER': os.getenv('POSTGRES_USER'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT'),
     }
@@ -106,7 +106,7 @@ DATABASES = {
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+        "LOCATION": f"redis://{os.getenv('REDIS_HOST')}:6379",
         "OPTIONS": {
             "db": "0",
         },
@@ -162,4 +162,29 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Email
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+
+
+
+
 # Celery
+
+CELERY_BROKER_URL = f'redis://{os.getenv("REDIS_HOST")}:6379/1'
+CELERY_RESULT_BACKEND = f'redis://{os.getenv("REDIS_HOST")}:6379/1'
+
+CELERY_BEAT_SCHEDULE = {
+      'send_mail_to_inactive_for_year_users': {
+        'task': 'users.tasks.send_email_if_user_inactive_for_year',
+        'schedule': 60 * 60,
+        'options': {
+            'expires': 60,
+        },
+    },
+}
