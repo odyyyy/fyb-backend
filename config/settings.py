@@ -188,3 +188,16 @@ CELERY_BEAT_SCHEDULE = {
         },
     },
 }
+
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# Django Debug Toolbar Docker Settings
+
+def show_toolbar_callback(*args, **kwargs):
+    if os.getenv("LOCAL_DEV"):
+        return True
+    return False
+
+
+DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": show_toolbar_callback}

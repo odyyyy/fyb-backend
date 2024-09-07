@@ -27,16 +27,15 @@ services:
     env_file:
       - .env
 
-
-
   celery:
     restart: always
     build:
       context: .
-    command: celery -A config worker -l INFO
+    command: celery -A config worker -l INFO -P solo
     volumes:
       - .:/django
     container_name: celery
+    user: "1000:1000"
     depends_on:
       - db
       - redis
