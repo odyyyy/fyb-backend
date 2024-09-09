@@ -7,7 +7,7 @@ from bands.models import Band
 
 class VacancyQuerySet(models.QuerySet):
     def with_related(self):
-        return self.select_related('created_by').prefetch_related('favourites')
+        return self.select_related('created_by').prefetch_related('favourites').order_by('-created_at')
 
 
 class Vacancy(models.Model):
@@ -17,6 +17,7 @@ class Vacancy(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата создания")
 
     objects = VacancyQuerySet.as_manager()
+
     class Meta:
         abstract = True
 
@@ -110,4 +111,3 @@ class OrganizerVacancy(Vacancy, FavouritesMixin):
 
     def __str__(self):
         return self.title
-
