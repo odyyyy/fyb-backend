@@ -31,14 +31,37 @@ services:
     restart: always
     build:
       context: .
-    command: celery -A config worker -l INFO -P solo
+    command: celery -A config worker -l INFO
     volumes:
-      - .:/django
+      - .:/app
     container_name: celery
     user: "1000:1000"
     depends_on:
       - db
       - redis
       - app
+  celery-beat:
+    container_name: celery-beat
+    build:
+      context: .
+    command: celery -A config beat -l INFO
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+      - app
+  flower:
+    container_name: flower
+    ports:
+      - "5555:5555"
+    build:
+      context: .
+    command: celery -A config flower
+    volumes:
+      - .:/app
+    depends_on:
+      - celery
+
 volumes:
   postgres_data:
