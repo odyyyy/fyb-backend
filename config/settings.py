@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+from celery.schedules import crontab
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,6 +30,7 @@ INSTALLED_APPS = [
     'rest_framework',
     "debug_toolbar",
     'social_django',
+    'django_celery_beat',
 
     # apps
     'users',
@@ -165,12 +167,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Email
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
+
+EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_PORT = 465
+EMAIL_USE_TLS = False
+EMAIL_USE_SSL = True
+
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 
+EMAIL_SERVER = EMAIL_HOST_USER
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+EMAIL_ADMIN = EMAIL_HOST_USER
 
 
 
@@ -179,17 +187,20 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 CELERY_BROKER_URL = f'redis://{os.getenv("REDIS_HOST")}:6379/1'
 CELERY_RESULT_BACKEND = f'redis://{os.getenv("REDIS_HOST")}:6379/1'
 
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# Celery Beat
+
 CELERY_BEAT_SCHEDULE = {
-      'send_mail_to_inactive_for_year_users': {
-        'task': 'users.tasks.send_email_if_user_inactive_for_year',
-        'schedule': 60 * 60,
-        'options': {
-            'expires': 60,
-        },
+    'send_daily_email_if_user_inactive_for_year': {
+        'task': 'users.tasks.send_daily_email_if_user_inactive_for_year',
+        'schedule': crontab(minute=0, hour=0),
+    },
+    'test_schedule_task': {
+        'task': 'users.tasks.test_schedule_task',
+        'schedule': 10.0,
     },
 }
-
-CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 
 # Django Debug Toolbar Docker Settings
