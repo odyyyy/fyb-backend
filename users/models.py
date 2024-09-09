@@ -3,6 +3,8 @@ import enum
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from users.tasks import send_welcome_email
+
 
 class User(AbstractUser):
     USER_MUSICIAN_ROLE = (('musician', 'Musician'),
@@ -20,3 +22,7 @@ class User(AbstractUser):
         related_name='custom_user_permissions_set',
         blank=True
     )
+    
+    def save(self, *args, **kwargs):
+        send_welcome_email.delay(self.email)
+        super().save(*args, **kwargs)
