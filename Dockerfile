@@ -1,6 +1,9 @@
 FROM python:3.12-alpine
 
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE 1
+
+WORKDIR /app
 
 RUN apk add --no-cache \
     postgresql-dev \
@@ -12,10 +15,6 @@ RUN apk add --no-cache \
     zlib-dev \
     linux-headers
 
-COPY requirements.txt .
+COPY . .
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
-
-WORKDIR /app
-COPY . .
-
