@@ -146,7 +146,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru-ru'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -187,6 +187,7 @@ EMAIL_ADMIN = EMAIL_HOST_USER
 CELERY_BROKER_URL = f'redis://{os.getenv("REDIS_HOST")}:6379/1'
 CELERY_RESULT_BACKEND = f'redis://{os.getenv("REDIS_HOST")}:6379/1'
 
+
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # Celery Beat
@@ -195,10 +196,6 @@ CELERY_BEAT_SCHEDULE = {
     'send_daily_email_if_user_inactive_for_year': {
         'task': 'users.tasks.send_daily_email_if_user_inactive_for_year',
         'schedule': crontab(minute=0, hour=0),
-    },
-    'test_schedule_task': {
-        'task': 'users.tasks.test_schedule_task',
-        'schedule': 10.0,
     },
 }
 
