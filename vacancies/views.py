@@ -1,15 +1,12 @@
-from itertools import chain
-
+from django.utils.translation import gettext as _
 from rest_framework import mixins
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
-from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
-from vacancies.serializers import MusicianVacancySerializer, BandVacancySerializer, OrganizerVacancySerializer, \
-    VacanciesBaseSerializer
-from vacancies.services import create_vacancy
-from vacancies.utils import StandartVacancyPagination
-from django.core.cache import cache
+from vacancies.serializers import VacanciesBaseSerializer
+from vacancies.services import create_periodic_adding_vacancies_task, \
+    get_vacancies_queryset_by_query_type
 
 
 class VacancyViewSet(mixins.CreateModelMixin,
@@ -21,17 +18,7 @@ class VacancyViewSet(mixins.CreateModelMixin,
 
     def get_queryset(self):
         query_type = self.request.query_params.get('q')
-        if query_type == 'musicians':
-            return MusicianVacancy.objects.with_related()
-        elif query_type == 'bands':
-            return BandVacancy.objects.with_related()
-        elif query_type == 'organizers':
-            return OrganizerVacancy.objects.with_related()
-        else:
-            musicians = MusicianVacancy.objects.with_related()
-            bands = BandVacancy.objects.with_related()
-            organizers = OrganizerVacancy.objects.with_related()
-            return chain(musicians, bands, organizers)
+        return get_vacancies_queryset_by_query_type(query_type)
 
     def get_object(self):
         uuid = self.kwargs.get('uuid')
@@ -42,11 +29,11 @@ class VacancyViewSet(mixins.CreateModelMixin,
 
     def create(self, request, *args, **kwargs):
         vacancy_data = request.data
-        if 'type' in vacancy_data:
-            match vacancy_data['type']:
-                case 'musician':
-                    return create_vacancy(MusicianVacancySerializer, vacancy_data)
-                case 'band':
-                    return create_vacancy(BandVacancySerializer, vacancy_data)
-                case 'organizer':
-                    return create_vacancy(OrganizerVacancySerializer, vacancy_data)
+
+        # Отложенное создание объявления если задано поле даты
+        if 'date' in vacancy_data:
+            create_periodic_adding_vacancies_task(vacancy_data)
+            return Response({'detail': _('Periodic task was created successfully')}, status=201)
+
+        return super().create(request, *args, **kwargs)
+
