@@ -1,9 +1,10 @@
+from django.http import Http404
 from django.utils.translation import gettext as _
 from rest_framework import mixins
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-
+from rest_framework.exceptions import NotFound
 from vacancies.serializers import VacanciesBaseSerializer
 from vacancies.services import create_periodic_adding_vacancies_task, \
     get_vacancies_queryset_by_query_type
@@ -15,6 +16,7 @@ class VacancyViewSet(mixins.CreateModelMixin,
                      GenericViewSet):
     serializer_class = VacanciesBaseSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, ]
+    lookup_field = 'uuid'
 
     def get_queryset(self):
         query_type = self.request.query_params.get('q')
@@ -27,6 +29,8 @@ class VacancyViewSet(mixins.CreateModelMixin,
             if str(vacancy_obj.uuid) == uuid:
                 return vacancy_obj
 
+        raise NotFound(detail=_('Vacancy not found'), code=404)
+
     def create(self, request, *args, **kwargs):
         vacancy_data = request.data
 
@@ -36,4 +40,3 @@ class VacancyViewSet(mixins.CreateModelMixin,
             return Response({'detail': _('Periodic task was created successfully')}, status=201)
 
         return super().create(request, *args, **kwargs)
-
