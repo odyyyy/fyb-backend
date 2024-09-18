@@ -25,7 +25,7 @@ class VacanciesTests(TestCase):
                                        genres=['Rock', 'Pop', 'jazz'])
 
     def test_vacancies_list_view(self):
-        response = self.client.get(reverse('vacancies_list'))
+        response = self.client.get(reverse('vacancies-list'))
         self.assertEqual(response.status_code, 200)
         all_vacancies = list(chain(MusicianVacancy.objects.all(),
                                    BandVacancy.objects.all(),
@@ -34,25 +34,26 @@ class VacanciesTests(TestCase):
         self.assertEqual(response.data, data)
 
     def test_musician_filter_view(self):
-        response = self.client.get(reverse('vacancies_list'), {'q': 'musicians'})
+        response = self.client.get(reverse('vacancies-list'), {'q': 'musicians'})
         self.assertEqual(response.status_code, 200)
         data = VacanciesBaseSerializer(MusicianVacancy.objects.all(), many=True).data
         self.assertEqual(response.data, data)
 
     def test_band_filter_view(self):
-        response = self.client.get(reverse('vacancies_list'), {'q': 'bands'})
+        response = self.client.get(reverse('vacancies-list'), {'q': 'bands'})
         self.assertEqual(response.status_code, 200)
         data = VacanciesBaseSerializer(BandVacancy.objects.all(), many=True).data
         self.assertEqual(response.data, data)
 
     def test_organizer_filter_view(self):
-        response = self.client.get(reverse('vacancies_list'), {'q': 'organizers'})
+        response = self.client.get(reverse('vacancies-list'), {'q': 'organizers'})
         self.assertEqual(response.status_code, 200)
         data = VacanciesBaseSerializer(OrganizerVacancy.objects.all(), many=True).data
         self.assertEqual(response.data, data)
 
     def test_vacancies_serializer(self):
         data = VacanciesBaseSerializer(MusicianVacancy.objects.get(uuid=self.item_uuid)).data
+
         self.assertEqual(data['description'], 'test_description')
         self.assertEqual(data['instruments'], ['guitar', 'bass', 'drums'])
         self.assertEqual(data['level'], 'beginner')
@@ -61,11 +62,11 @@ class VacanciesTests(TestCase):
         self.assertEqual(data['genres'], ['Rock', 'Pop', 'jazz'])
 
     def test_vacancy_item_view(self):
-        response = self.client.get(reverse('vacancy_item', args=[self.item_uuid]))
+        response = self.client.get(reverse('vacancies-detail', args=[self.item_uuid]))
         self.assertEqual(response.status_code, 200)
         data = VacanciesBaseSerializer(MusicianVacancy.objects.get(uuid=self.item_uuid)).data
-        self.assertEqual(response.data, data)
+        self.assertEqual(response.data, data )
 
     def test_vacancy_item_view_not_found(self):
-        response = self.client.get(reverse('vacancy_item', args=[uuid.uuid4()]))
+        response = self.client.get(reverse('vacancies-detail', args=['12345678-1234-1234-1234-123456789012']))
         self.assertEqual(response.status_code, 404)
