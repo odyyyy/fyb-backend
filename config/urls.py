@@ -13,6 +13,7 @@ urlpatterns = [
                   path('bands/', include('bands.urls')),
                   path('users/', include('users.urls')),
                   path('news/', include('news.urls')),
+                  path('djdt/', include('debug_toolbar.urls')),
               ] + debug_toolbar_urls()
 
 
