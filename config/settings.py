@@ -52,7 +52,7 @@ MIDDLEWARE = [
 
 ]
 
-
+AUTH_USER_MODEL = 'users.User'
 
 # OAuth2
 
@@ -124,7 +124,6 @@ SESSION_SAVE_EVERY_REQUEST = False
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
 
-# AUTH_USER_MODEL = 'users.User'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -180,13 +179,10 @@ EMAIL_SERVER = EMAIL_HOST_USER
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 EMAIL_ADMIN = EMAIL_HOST_USER
 
-
-
 # Celery
 
 CELERY_BROKER_URL = f'redis://{os.getenv("REDIS_HOST")}:6379/1'
 CELERY_RESULT_BACKEND = f'redis://{os.getenv("REDIS_HOST")}:6379/1'
-
 
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
@@ -208,4 +204,5 @@ def show_toolbar_callback(*args, **kwargs):
     return False
 
 
-DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": show_toolbar_callback}
+DEBUG_TOOLBAR_CONFIG = {"SHOW_TOOLBAR_CALLBACK": show_toolbar_callback,
+                        'IS_RUNNING_TESTS': False}
