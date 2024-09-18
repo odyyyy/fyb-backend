@@ -14,7 +14,6 @@ class FavoriteVacancySerializer(serializers.Serializer):
 
 
 class VacanciesBaseSerializer(serializers.Serializer):
-    type = serializers.CharField(write_only=True)
 
     def to_representation(self, vacancy_obj):
         return choose_vacancy_serializer(vacancy_obj)
