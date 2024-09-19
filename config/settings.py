@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     # 3rd party
     'rest_framework',
     "debug_toolbar",
@@ -191,6 +192,10 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_BEAT_SCHEDULE = {
     'send_daily_email_if_user_inactive_for_year': {
         'task': 'users.tasks.send_daily_email_if_user_inactive_for_year',
+        'schedule': crontab(minute=0, hour=0),
+    },
+    'delete_account_if_user_inactive_long_time': {
+        'task': 'users.tasks.delete_account_if_user_inactive_long_time',
         'schedule': crontab(minute=0, hour=0),
     },
 }
