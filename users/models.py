@@ -11,5 +11,5 @@ class User(AbstractUser):
     image = models.ImageField(upload_to='media/photos/users/%Y/%m/%d/', blank=True, null=True, verbose_name="Фото")
 
     def save(self, *args, **kwargs):
-        send_welcome_email.delay(self.email)
+        send_welcome_email.delay(self.username)
         super().save(*args, **kwargs)
