@@ -35,7 +35,7 @@ class BandTests(APITestCase):
     def test_band_view_detail_not_authenticated(self):
         response = self.client.get(self.band_url_detail)
 
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data, {'detail': _('Authentication credentials were not provided.')})
 
     def test_band_view_detail_authenticated_but_not_leader(self):
@@ -71,7 +71,7 @@ class BandTests(APITestCase):
         }, format='json')
 
         self.assertEqual(Band.objects.count(), 1)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
     def test_band_view_update(self):
@@ -93,7 +93,7 @@ class BandTests(APITestCase):
         }, format='json')
 
         self.assertEqual(Band.objects.get(name=self.band.name).city, 'St Petersburg')
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
     def test_band_view_delete(self):
         self.client.force_authenticate(user=self.user)
