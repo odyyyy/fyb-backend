@@ -1,10 +1,10 @@
-from django.http import Http404
 from django.utils.translation import gettext as _
 from rest_framework import mixins
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
-from rest_framework.exceptions import NotFound
+
 from vacancies.serializers import VacanciesBaseSerializer
 from vacancies.services import create_periodic_adding_vacancies_task, \
     get_vacancies_queryset_by_query_type
@@ -18,17 +18,22 @@ class VacancyViewSet(mixins.CreateModelMixin,
     permission_classes = [IsAuthenticatedOrReadOnly, ]
     lookup_field = 'uuid'
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['view_action'] = self.action
+        return context
+
     def get_queryset(self):
         query_type = self.request.query_params.get('q')
         return get_vacancies_queryset_by_query_type(query_type)
 
     def get_object(self):
         uuid = self.kwargs.get('uuid')
+
         vacancies_qs = self.get_queryset()
         for vacancy_obj in vacancies_qs:
             if str(vacancy_obj.uuid) == uuid:
                 return vacancy_obj
-
         raise NotFound(detail=_('Vacancy not found'), code=404)
 
     def create(self, request, *args, **kwargs):
