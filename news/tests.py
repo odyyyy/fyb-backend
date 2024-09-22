@@ -1,12 +1,12 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
-from news.services import parse_actual_news
+from news.services import parse_actual_news, NEWS_CACHE_KEY, get_news_item, get_actual_news
 
 
-def get_actual_news_mocked():
+def get_news_mock():
     return [
         {
             "title": "Test news",
@@ -26,7 +26,7 @@ def get_actual_news_mocked():
 
 
 def get_news_item_mocked(slug: str):
-    news = get_actual_news_mocked()
+    news = get_news_mock()
     for item in news:
         if item['slug'] == slug:
             return item
@@ -34,7 +34,7 @@ def get_news_item_mocked(slug: str):
 
 class NewsAPITestCase(APITestCase):
 
-    @patch('news.views.get_actual_news', get_actual_news_mocked)
+    @patch('news.views.get_actual_news', get_news_mock)
     def test_news_list(self):
         response = self.client.get(reverse('news-list'))
         self.assertEqual(response.status_code, 200)
@@ -55,10 +55,10 @@ class NewsAPITestCase(APITestCase):
 
 class NewsServiceTestCase(APITestCase):
 
-    @patch('news.services.requests.get')
-    # @patch('news.services.cache.set')
-    def test_parse_actual_news(self, mock_request_get_data):
-        mock_rss_content = '''<rss
+    @patch('news.services.requests')
+    @patch('news.services.cache.set')
+    def test_parse_actual_news(self, mock_cache_set, mock_requests):
+        rss_content = '''<rss
 	xmlns:atom="http://www.w3.org/2005/Atom"
 	xmlns:dc="http://purl.org/dc/elements/1.1/"
 	xmlns:media="http://search.yahoo.com/mrss/" version="2.0">
@@ -81,7 +81,12 @@ class NewsServiceTestCase(APITestCase):
 	</channel>
 </rss>'''
 
-        mock_request_get_data.return_value.content = mock_rss_content
+        mock_response = MagicMock()
+
+        mock_response.status_code = 200
+        mock_response.content = rss_content
+
+        mock_requests.get.return_value = mock_response
 
         result_json_news = parse_actual_news()
 
@@ -93,4 +98,52 @@ class NewsServiceTestCase(APITestCase):
             'image': 'http://example.com/image.jpg',
         }]
 
+        mock_cache_set.assert_called_once_with(NEWS_CACHE_KEY, expected_news, 60 * 60)
         self.assertEqual(result_json_news, expected_news)
+
+    @patch('news.services.requests')
+    def test_parse_actual_news_failed(self, mock_requests):
+        mock_response = MagicMock(status_code=500)
+        mock_requests.get.return_value = mock_response
+
+        self.assertEqual(parse_actual_news(),
+                         [{'error': f'Failed to get news status code: {mock_response.status_code}'}])
+
+    @patch('news.services.cache.get')
+    def test_get_news_item(self, mock_cache_get):
+        mock_cache_get.return_value = get_news_mock()
+
+        self.assertEqual(get_news_item('test-news'), {
+            'title': 'Test news',
+            'slug': 'test-news',
+            'description': 'bla bla bla',
+            'pubDate': '2024-09-18 17:09:09',
+            'image': 'https://media.pitchfork.com/photos/66eaeb47d2a9f24c73617a27/master/pass/Haley-Heynderickx.jpg'
+        })
+
+    @patch('news.services.cache.get')
+    def test_get_news_item_not_in_cache(self, mock_cache_get):
+        mock_cache_get.return_value = None
+        self.assertEqual(get_news_item('test-news-not-found'), None)
+        mock_cache_get.assert_called_once_with(NEWS_CACHE_KEY)
+
+
+
+    @patch('news.services.cache.get')
+    def test_get_actual_news(self,mock_cache_get):
+        mock_cache_get.return_value = get_news_mock()
+
+        self.assertEqual(get_actual_news(), mock_cache_get.return_value)
+        self.assertEqual(mock_cache_get.call_count, 1)
+
+
+    @patch('news.services.cache.get')
+    @patch('news.services.parse_actual_news')
+    def test_get_actual_news_not_in_cache(self, mock_parse_actual_news, mock_cache_get):
+        mock_cache_get.return_value = None
+        mock_parse_actual_news.return_value = get_news_mock()
+        result = get_actual_news()
+
+        self.assertEqual(mock_cache_get.call_count, 2)
+        self.assertEqual(result, None)
+
