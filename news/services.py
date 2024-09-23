@@ -10,7 +10,7 @@ NEWS_RSS_URL = "https://pitchfork.com/feed/feed-news/rss"
 NEWS_CACHE_KEY = 'news'
 
 
-def get_actual_news() -> list:
+def get_actual_news() -> list[dict[str, str]]:
     news_data = cache.get(NEWS_CACHE_KEY)
     if news_data is not None:
         return news_data
@@ -19,8 +19,12 @@ def get_actual_news() -> list:
 
 
 def parse_actual_news() -> list[dict[str, str]]:
-    rss_response_data = requests.get(NEWS_RSS_URL).content
-    news_document = parseString(rss_response_data)
+    response = requests.get(NEWS_RSS_URL)
+
+    if response.status_code != 200:
+        return [{'error': f'Failed to get news status code: {response.status_code}'}]
+
+    news_document = parseString(response.content)
 
     news_items = news_document.getElementsByTagName("item")
     json_news = []
@@ -46,7 +50,7 @@ def parse_actual_news() -> list[dict[str, str]]:
     return json_news
 
 
-def get_news_item(slug: str) -> dict:
+def get_news_item(slug: str) -> dict | None:
     news_data = cache.get(NEWS_CACHE_KEY)
     if news_data is not None:
         for item in news_data:
