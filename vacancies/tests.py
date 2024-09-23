@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from bands.models import Band
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 
 from vacancies.serializers import VacanciesBaseSerializer
@@ -23,32 +24,53 @@ class VacanciesTests(TestCase):
                                        city='London',
                                        contacts=['test_user', 'test_user', 'test_user'],
                                        genres=['Rock', 'Pop', 'jazz'])
+        band = Band.objects.create(name='test_band',
+                                   leader=user,
+                                   city='London',
+                                   )
+        band.members.set([user])
+        BandVacancy.objects.create(created_by=band,
+                                   description='test_description',
+                                   city='London',
+                                   level='beginner',
+                                   instrument='guitar',
+                                   genres='Rock',
+                                   contacts=['test@example', '+79999999931', '@test_user'],)
+
+        OrganizerVacancy.objects.create(created_by=user,
+                                        description='test_description',
+                                        address='London',
+                                        title='test_title',
+                                        event_type='concert',
+                                        event_datetime='2024-09-18T20:29:50+03:00')
 
     def test_vacancies_list_view(self):
         response = self.client.get(reverse('vacancies-list'))
-        self.assertEqual(response.status_code, 200)
+
         all_vacancies = list(chain(MusicianVacancy.objects.all(),
                                    BandVacancy.objects.all(),
                                    OrganizerVacancy.objects.all()))
-        data = VacanciesBaseSerializer(all_vacancies, many=True).data
+        data = VacanciesBaseSerializer(all_vacancies, context={'view_action': 'list'}, many=True).data
+
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data, data)
 
     def test_musician_filter_view(self):
         response = self.client.get(reverse('vacancies-list'), {'q': 'musicians'})
         self.assertEqual(response.status_code, 200)
-        data = VacanciesBaseSerializer(MusicianVacancy.objects.all(), many=True).data
+        data = VacanciesBaseSerializer(MusicianVacancy.objects.all(), context={'view_action': 'list'}, many=True).data
         self.assertEqual(response.data, data)
 
     def test_band_filter_view(self):
         response = self.client.get(reverse('vacancies-list'), {'q': 'bands'})
         self.assertEqual(response.status_code, 200)
-        data = VacanciesBaseSerializer(BandVacancy.objects.all(), many=True).data
+        data = VacanciesBaseSerializer(BandVacancy.objects.all(), context={'view_action': 'list'}, many=True).data
         self.assertEqual(response.data, data)
 
     def test_organizer_filter_view(self):
         response = self.client.get(reverse('vacancies-list'), {'q': 'organizers'})
         self.assertEqual(response.status_code, 200)
-        data = VacanciesBaseSerializer(OrganizerVacancy.objects.all(), many=True).data
+        data = VacanciesBaseSerializer(OrganizerVacancy.objects.all(), context={'view_action': 'list'}, many=True).data
         self.assertEqual(response.data, data)
 
     def test_vacancies_serializer(self):
@@ -65,7 +87,7 @@ class VacanciesTests(TestCase):
         response = self.client.get(reverse('vacancies-detail', args=[self.item_uuid]))
         self.assertEqual(response.status_code, 200)
         data = VacanciesBaseSerializer(MusicianVacancy.objects.get(uuid=self.item_uuid)).data
-        self.assertEqual(response.data, data )
+        self.assertEqual(response.data, data)
 
     def test_vacancy_item_view_not_found(self):
         response = self.client.get(reverse('vacancies-detail', args=['12345678-1234-1234-1234-123456789012']))
