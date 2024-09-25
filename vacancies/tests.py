@@ -1,17 +1,17 @@
-import uuid
 from itertools import chain
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
+from django_celery_beat.models import PeriodicTask
 
 from bands.models import Band
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
-
 from vacancies.serializers import VacanciesBaseSerializer
+from vacancies.services import create_periodic_adding_vacancies_task, get_vacancies_queryset_by_query_type
 
 
-class VacanciesTests(TestCase):
+class VacanciesViewsTests(TestCase):
     item_uuid = '73680966-8340-4141-affb-32c346f358dd'
 
     def setUp(self):
@@ -35,7 +35,7 @@ class VacanciesTests(TestCase):
                                    level='beginner',
                                    instrument='guitar',
                                    genres='Rock',
-                                   contacts=['test@example', '+79999999931', '@test_user'],)
+                                   contacts=['test@example', '+79999999931', '@test_user'], )
 
         OrganizerVacancy.objects.create(created_by=user,
                                         description='test_description',
@@ -92,3 +92,38 @@ class VacanciesTests(TestCase):
     def test_vacancy_item_view_not_found(self):
         response = self.client.get(reverse('vacancies-detail', args=['12345678-1234-1234-1234-123456789012']))
         self.assertEqual(response.status_code, 404)
+
+    def test_get_vacancies_queryset_by_query_type(self):
+        self.assertEqual(list(get_vacancies_queryset_by_query_type('musicians')),
+                         list(MusicianVacancy.objects.with_related()))
+        self.assertEqual(list(get_vacancies_queryset_by_query_type('bands')), list(BandVacancy.objects.with_related()))
+        self.assertEqual(list(get_vacancies_queryset_by_query_type('organizers')),
+                         list(OrganizerVacancy.objects.with_related()))
+        self.assertEqual(list(get_vacancies_queryset_by_query_type('')), list(
+            chain(MusicianVacancy.objects.with_related(), BandVacancy.objects.with_related(),
+                  OrganizerVacancy.objects.with_related())))
+
+
+class VacanciesServicesTests(TestCase):
+
+    def setUp(self):
+        self.user = get_user_model().objects.create(username='test_user', email='test_user_email@mail.com')
+        self.vacancy_test_data = {
+            "type": "organizer",
+            "date": "2024-09-26T16:40:12.468407+03:00",
+            "uuid": "c5afdd15-4531-4536-9813-ad412ccdd18b",
+            "description": "just a open air Rock Festival",
+            "title": "Test Rock Festival",
+            "event_type": "Test Festival",
+            "address": "Omsk, Leninskaya street, 15",
+            "event_datetime": "2024-09-16T17:01:10+03:00",
+            "created_by": self.user.pk,
+            "favourites": [
+                7
+            ]
+        }
+
+    def test_create_periodic_adding_vacancies_task(self):
+        create_periodic_adding_vacancies_task(self.vacancy_test_data)
+
+        self.assertEqual(PeriodicTask.objects.count(), 1)
