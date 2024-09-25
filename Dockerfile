@@ -1,20 +1,20 @@
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE 1
 
-WORKDIR /app
-
-RUN apk add --no-cache \
-    postgresql-dev \
+RUN apt-get update && apt-get install -y libpq-dev \
     gcc \
     python3-dev \
-    musl-dev \
-    postgresql-client \
-    jpeg-dev \
-    zlib-dev \
-    linux-headers
+    postgresql-client
 
-COPY . .
+
+
+WORKDIR /app
+
+COPY requirements.txt .
+
 RUN pip install --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
