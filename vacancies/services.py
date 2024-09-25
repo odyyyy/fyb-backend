@@ -2,19 +2,8 @@ import json
 from itertools import chain
 
 from django_celery_beat.models import PeriodicTask, ClockedSchedule
-from rest_framework.response import Response
-from rest_framework.serializers import Serializer
 
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
-
-
-def create_vacancy(serializer_class: Serializer, vacancy_data: dict) -> Response:
-    serializer = serializer_class(data=vacancy_data)
-    if serializer.is_valid():
-        serializer.save()
-        return Response(serializer.data, status=201)
-    else:
-        return Response(serializer.errors, status=400)
 
 
 def create_periodic_adding_vacancies_task(vacancy_data: dict):
