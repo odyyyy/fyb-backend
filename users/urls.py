@@ -7,5 +7,5 @@ router = SimpleRouter()
 router.register('favourites', UserFavouritesView, basename='favourites')
 router.register('vacancies', UsersVacancyView, basename='users-vacancies')
 urlpatterns = router.urls + [
-    path('profile/', UserProfileView.as_view()),
+    path('profile/', UserProfileView.as_view(), name='users-profile'),
 ]

@@ -1,17 +1,17 @@
 from itertools import chain
-from rest_framework import mixins, viewsets
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.generics import RetrieveAPIView
+
 from django.http import Http404
-
 from django.shortcuts import render
-
+from rest_framework import mixins, viewsets
+from rest_framework.generics import GenericAPIView
+from rest_framework.permissions import IsAuthenticated
 
 from bands.models import Band
 from users.permissions import AuthorPermission
 from users.serializers import UserProfileSerializer
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from vacancies.serializers import VacanciesBaseSerializer
+
 
 class UsersVacancyView(mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.RetrieveModelMixin,
                        mixins.DestroyModelMixin,
@@ -41,8 +41,6 @@ class UsersVacancyView(mixins.ListModelMixin, mixins.UpdateModelMixin, mixins.Re
                 return obj
 
         raise Http404("Object with this UUID does not exist")
-
-
 
 
 class UserFavouritesView(mixins.ListModelMixin,
@@ -76,13 +74,19 @@ class UserFavouritesView(mixins.ListModelMixin,
         if len(vacancy) != 0:
             vacancy[0].favourites.remove(request.user)
 
-class UserProfileView(RetrieveAPIView):
+
+class UserProfileView(mixins.RetrieveModelMixin, mixins.UpdateModelMixin, GenericAPIView):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated, ]
 
     def get_object(self):
         return self.request.user
 
+    def get(self, request, *args, **kwargs):
+        return self.retrieve(request, *args, **kwargs)
+
+    def patch(self, request, *args, **kwargs):
+        return self.partial_update(request, *args, **kwargs)
 
 
 def auth(request):
