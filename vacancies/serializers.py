@@ -28,6 +28,7 @@ class VacanciesBaseSerializer(serializers.Serializer):
         return data
 
     def create(self, validated_data):
+        print('in serializer, validated data', validated_data)
         vacancy_type = validated_data.pop('type', None)
 
         if vacancy_type == 'musician':

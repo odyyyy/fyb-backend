@@ -1,3 +1,5 @@
+import logging
+
 from django.utils.translation import gettext as _
 from rest_framework import mixins
 from rest_framework.exceptions import NotFound
@@ -9,6 +11,8 @@ from vacancies.serializers import VacanciesBaseSerializer
 from vacancies.services import create_periodic_adding_vacancies_task, \
     get_vacancies_queryset_by_query_type
 
+
+logger = logging.getLogger(__name__)
 
 class VacancyViewSet(mixins.CreateModelMixin,
                      mixins.RetrieveModelMixin,
@@ -41,7 +45,11 @@ class VacancyViewSet(mixins.CreateModelMixin,
 
         # Отложенное создание объявления если задано поле даты
         if 'date' in vacancy_data:
+            logger.debug(f'Create new vacancy at time specified by user {vacancy_data.get("uuid")}')
+            logger.info('Executing create_vacancy_at_time_chosen_by_user task')
+
             create_periodic_adding_vacancies_task(vacancy_data)
+
             return Response({'detail': _('Periodic task was created successfully')}, status=201)
 
         return super().create(request, *args, **kwargs)

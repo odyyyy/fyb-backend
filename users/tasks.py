@@ -24,9 +24,7 @@ def send_welcome_email(self, user_nickname):
 @shared_task
 def send_daily_email_if_user_inactive_for_year():
     inactive_users = get_user_model().objects.filter(last_login__lte=datetime.now() - timedelta(days=365))
-    print(inactive_users)
-    print(datetime.now() - timedelta(days=365))
-    print(datetime.now() - timedelta(days=365) < datetime.now())
+
     if inactive_users.exists():
         send_mail(
             subject='Inactive users',
