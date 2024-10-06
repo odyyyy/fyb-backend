@@ -1,5 +1,4 @@
 from itertools import chain
-
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -9,6 +8,7 @@ from bands.models import Band
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from vacancies.serializers import VacanciesBaseSerializer
 from vacancies.services import create_periodic_adding_vacancies_task, get_vacancies_queryset_by_query_type
+from vacancies.tasks import create_vacancy_at_time_chosen_by_user
 
 
 class VacanciesViewsTests(TestCase):
@@ -107,6 +107,8 @@ class VacanciesViewsTests(TestCase):
 class VacanciesServicesTests(TestCase):
 
     def setUp(self):
+        # celery_app.conf.update(CELERY_ALWAYS_EAGER=True)
+
         self.user = get_user_model().objects.create(username='test_user', email='test_user_email@mail.com')
         self.vacancy_test_data = {
             "type": "organizer",
@@ -119,7 +121,7 @@ class VacanciesServicesTests(TestCase):
             "event_datetime": "2024-09-16T17:01:10+03:00",
             "created_by": self.user.pk,
             "favourites": [
-                7
+                self.user.pk
             ]
         }
 
@@ -127,3 +129,9 @@ class VacanciesServicesTests(TestCase):
         create_periodic_adding_vacancies_task(self.vacancy_test_data)
 
         self.assertEqual(PeriodicTask.objects.count(), 1)
+
+    def test_create_vacancy_at_time_chosen_by_user(self):
+        create_vacancy_at_time_chosen_by_user(self.vacancy_test_data)
+
+        self.assertEqual(OrganizerVacancy.objects.count(), 1)
+        self.assertEqual(OrganizerVacancy.objects.first().title, self.vacancy_test_data['title'])
