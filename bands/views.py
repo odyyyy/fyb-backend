@@ -1,4 +1,5 @@
 from rest_framework import generics, mixins
+from rest_framework.generics import get_object_or_404, GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
@@ -12,7 +13,12 @@ class BandAPIView(mixins.CreateModelMixin,
                   mixins.UpdateModelMixin,
                   mixins.DestroyModelMixin,
                   GenericViewSet):
-    queryset = Band.objects.all()
     serializer_class = BandSerializer
     permission_classes = (IsAuthenticated, BandLeaderPermission)
+
+    def get_object(self):
+        return get_object_or_404(Band, leader=self.request.user)
+
+
+
 

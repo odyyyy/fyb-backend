@@ -5,4 +5,5 @@ from bands.models import Band
 
 class BandLeaderPermission(BasePermission):
     def has_permission(self, request, view):
-        return Band.objects.filter(leader=request.user).exists() or request.method == 'POST'
+        return (Band.objects.filter(leader=request.user).exists() or
+                (request.method == 'POST' and not Band.objects.filter(leader=request.user).exists()))
