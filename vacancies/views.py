@@ -9,10 +9,10 @@ from rest_framework.viewsets import GenericViewSet
 
 from vacancies.serializers import VacanciesBaseSerializer
 from vacancies.services import create_periodic_adding_vacancies_task, \
-    get_vacancies_queryset_by_query_type
-
+    get_vacancies_queryset_by_query_params
 
 logger = logging.getLogger(__name__)
+
 
 class VacancyViewSet(mixins.CreateModelMixin,
                      mixins.RetrieveModelMixin,
@@ -28,8 +28,8 @@ class VacancyViewSet(mixins.CreateModelMixin,
         return context
 
     def get_queryset(self):
-        query_type = self.request.query_params.get('q')
-        return get_vacancies_queryset_by_query_type(query_type)
+        query_params = self.request.query_params
+        return get_vacancies_queryset_by_query_params(query_params)
 
     def get_object(self):
         uuid = self.kwargs.get('uuid')
