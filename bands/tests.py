@@ -22,25 +22,24 @@ class BandTests(APITestCase):
         )
         self.band.members.set([self.user, self.user2])
 
-        self.band_url_detail = reverse('bands:band-detail', args=[self.band.pk])
-        self.band_url_create_updata_delete = reverse('bands:band-list')
+        self.bands_endpoint = reverse('bands:bands')
 
     def test_band_view_detail(self):
         self.client.force_authenticate(user=self.user)
-        response = self.client.get(self.band_url_detail)
+        response = self.client.get(self.bands_endpoint)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, BandSerializer(self.band).data)
 
     def test_band_view_detail_not_authenticated(self):
-        response = self.client.get(self.band_url_detail)
+        response = self.client.get(self.bands_endpoint)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data, {'detail': _('Authentication credentials were not provided.')})
 
     def test_band_view_detail_authenticated_but_not_leader(self):
         self.client.force_authenticate(user=self.user2)
-        response = self.client.get(self.band_url_detail)
+        response = self.client.get(self.bands_endpoint)
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
         self.assertEqual(response.data, {'detail': _('You do not have permission to perform this action.')})
@@ -49,7 +48,7 @@ class BandTests(APITestCase):
 
     def test_band_view_create(self):
         self.client.force_authenticate(user=self.user2)
-        response = self.client.post(self.band_url_create_updata_delete, {
+        response = self.client.post(self.bands_endpoint, {
             'name': 'test_band2',
             'leader': self.user2.pk,
             'city': 'Moscow',
@@ -63,7 +62,7 @@ class BandTests(APITestCase):
 
 
     def test_band_view_create_not_authenticated(self):
-        response = self.client.post(self.band_url_create_updata_delete, {
+        response = self.client.post(self.bands_endpoint, {
             'name': 'test_band2',
             'leader': self.user2.pk,
             'city': 'Moscow',
@@ -77,7 +76,7 @@ class BandTests(APITestCase):
     def test_band_view_update(self):
         self.client.force_authenticate(user=self.user)
         band_new_name = 'The New Band'
-        response = self.client.patch(self.band_url_detail, {
+        response = self.client.patch(self.bands_endpoint, {
             'name': band_new_name,
             'city': 'Moscow',
         }, format='json')
@@ -87,7 +86,7 @@ class BandTests(APITestCase):
 
     def test_band_view_update_not_authenticated(self):
         band_new_name = 'The New Band'
-        response = self.client.patch(self.band_url_detail, {
+        response = self.client.patch(self.bands_endpoint, {
             'name': band_new_name,
             'city': 'Moscow',
         }, format='json')
@@ -97,7 +96,7 @@ class BandTests(APITestCase):
 
     def test_band_view_delete(self):
         self.client.force_authenticate(user=self.user)
-        response = self.client.delete(self.band_url_detail)
+        response = self.client.delete(self.bands_endpoint)
 
         self.assertEqual(Band.objects.count(), 0)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
