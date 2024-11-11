@@ -1,3 +1,5 @@
+import re
+
 from rest_framework import serializers
 
 from .models import MusicianVacancy, BandVacancy, OrganizerVacancy
@@ -84,6 +86,12 @@ class OrganizerVacancyListSerializer(serializers.ModelSerializer):
         data = super().to_representation(instance)
         data['address'] = data['address'].split(',')[0]
         return data
+
+    def validate_address(self, value):
+        address_pattern = r'^[A-Za-zА-Яа-яЁё\s]+,\s*[A-Za-zА-Яа-яЁё\s]+,\s*\d+$'
+        if not re.match(address_pattern, value):
+            raise serializers.ValidationError("Адрес должен быть в формате 'Город, Улица, Номер дома'.")
+        return value
 
 
 def choose_vacancy_serializer(vacancy_obj, view_action):
