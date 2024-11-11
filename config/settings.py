@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     "debug_toolbar",
     'social_django',
     'django_celery_beat',
+    'django_filters',
+    'drf_spectacular',
 
     # apps
     'users',
@@ -39,6 +41,13 @@ INSTALLED_APPS = [
     'bands',
     'news',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -152,6 +161,15 @@ USE_I18N = True
 
 USE_TZ = True
 
+
+# drf-spectacular Settings
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'FindYourBand API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+}
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
@@ -189,8 +207,8 @@ LOGGING = {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'file-formatter',
             'level': 'DEBUG',
-            'filename':  BASE_DIR / 'logs' / 'django-logs.log',
-            'maxBytes': 1024 * 1024 * 5, # 5 mb
+            'filename': BASE_DIR / 'logs' / 'django-logs.log',
+            'maxBytes': 1024 * 1024 * 5,  # 5 mb
             'backupCount': 5,
 
         }
@@ -202,8 +220,8 @@ LOGGING = {
     },
 
     'loggers': {
-        'vacancies':{
-            'handlers': ['console', 'file' ],
+        'vacancies': {
+            'handlers': ['console', 'file'],
             'level': os.getenv('DJANGO_LOG_LEVEL', 'INFO'),
             'propagate': False,
         },

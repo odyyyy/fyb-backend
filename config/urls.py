@@ -1,6 +1,7 @@
 from debug_toolbar import urls as debug_toolbar_urls
 from django.contrib import admin
 from django.urls import path, include, re_path
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 from users.views import auth
 
@@ -20,4 +21,9 @@ urlpatterns = [
     re_path('', include('social_django.urls', namespace='social')),
     path('auth/', auth),
     path('djdt/', include(debug_toolbar_urls)),
+
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    # Optional UI
+    path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
