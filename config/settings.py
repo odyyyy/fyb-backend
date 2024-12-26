@@ -40,6 +40,8 @@ INSTALLED_APPS = [
     'vacancies',
     'bands',
     'news',
+    'notifications',
+
 ]
 
 REST_FRAMEWORK = {

@@ -7,3 +7,5 @@ class VacanciesConfig(AppConfig):
     verbose_name = "Объявления"
 
 
+    def ready(self):
+        import vacancies.signals
