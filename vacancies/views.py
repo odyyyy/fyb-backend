@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
+from vacancies.permissions import VacancyCreatorPermission
 from vacancies.serializers import VacanciesBaseSerializer
 from vacancies.services import create_periodic_adding_vacancies_task, \
     get_vacancies_queryset_by_query_params
@@ -17,9 +18,11 @@ logger = logging.getLogger(__name__)
 class VacancyViewSet(mixins.CreateModelMixin,
                      mixins.RetrieveModelMixin,
                      mixins.ListModelMixin,
+                     mixins.DestroyModelMixin,
+                     mixins.UpdateModelMixin,
                      GenericViewSet):
     serializer_class = VacanciesBaseSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly, ]
+    permission_classes = (IsAuthenticatedOrReadOnly, VacancyCreatorPermission)
     lookup_field = 'uuid'
 
     def get_serializer_context(self):
@@ -53,3 +56,6 @@ class VacancyViewSet(mixins.CreateModelMixin,
             return Response({'detail': _('Periodic task was created successfully')}, status=201)
 
         return super().create(request, *args, **kwargs)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user.id)
