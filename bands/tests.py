@@ -22,7 +22,7 @@ class BandTests(APITestCase):
         )
         self.band.members.set([self.user, self.user2])
 
-        self.bands_endpoint = reverse('bands:bands')
+        self.bands_endpoint =  reverse('bands:bands')
 
     def test_band_view_detail(self):
         self.client.force_authenticate(user=self.user)
@@ -47,18 +47,22 @@ class BandTests(APITestCase):
 
 
     def test_band_view_create(self):
-        self.client.force_authenticate(user=self.user2)
+        new_user = get_user_model().objects.create(username='new_user_not_in_band', email='new_user_not_in_band@mail.com')
+
+        self.client.force_authenticate(user=new_user)
         response = self.client.post(self.bands_endpoint, {
-            'name': 'test_band2',
-            'leader': self.user2.pk,
+            'name': 'new_band',
+            'leader': new_user.pk,
             'city': 'Moscow',
-            'members': [self.user.pk, self.user2.pk],
+            'members': [new_user.pk],
         }, format='json')
 
+        print('DSADASDLASSA', Band.objects.all())
 
-        self.assertEqual(Band.objects.count(), 2)
-        self.assertEqual(Band.objects.get(name='test_band2').leader, self.user2)
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Band.objects.count(), 2)
+        self.assertEqual(Band.objects.get(name='new_band').leader, new_user)
 
 
     def test_band_view_create_not_authenticated(self):
@@ -69,9 +73,22 @@ class BandTests(APITestCase):
             'members': [self.user.pk, self.user2.pk],
         }, format='json')
 
+
         self.assertEqual(Band.objects.count(), 1)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_band_view_create_if_user_already_in_band(self):
+        self.client.force_authenticate(user=self.user)
+        response = self.client.post(self.bands_endpoint, {
+            'name': 'test_band2',
+            'leader': self.user2.pk,
+            'city': 'Moscow',
+            'members': [self.user.pk, self.user2.pk],
+        }, format='json')
+
+        self.assertEqual(Band.objects.count(), 1)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'detail': _('You are already a member of a band')})
 
     def test_band_view_update(self):
         self.client.force_authenticate(user=self.user)

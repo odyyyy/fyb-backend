@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List, Dict, Any
 from xml.dom.minidom import parseString
 
 import requests

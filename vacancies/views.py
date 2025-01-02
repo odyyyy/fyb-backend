@@ -1,11 +1,10 @@
 import logging
 
 from django.utils.translation import gettext as _
-from rest_framework import mixins
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import ModelViewSet
 
 from vacancies.permissions import VacancyCreatorPermission
 from vacancies.serializers import VacanciesBaseSerializer
@@ -15,12 +14,7 @@ from vacancies.services import create_periodic_adding_vacancies_task, \
 logger = logging.getLogger(__name__)
 
 
-class VacancyViewSet(mixins.CreateModelMixin,
-                     mixins.RetrieveModelMixin,
-                     mixins.ListModelMixin,
-                     mixins.DestroyModelMixin,
-                     mixins.UpdateModelMixin,
-                     GenericViewSet):
+class VacancyViewSet(ModelViewSet):
     serializer_class = VacanciesBaseSerializer
     permission_classes = (IsAuthenticatedOrReadOnly, VacancyCreatorPermission)
     lookup_field = 'uuid'

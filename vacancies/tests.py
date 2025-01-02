@@ -1,5 +1,6 @@
 from itertools import chain
 from django.contrib.auth import get_user_model
+from django.http import QueryDict
 from django.test import TestCase
 from django.urls import reverse
 from django_celery_beat.models import PeriodicTask
@@ -7,7 +8,7 @@ from django_celery_beat.models import PeriodicTask
 from bands.models import Band
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 from vacancies.serializers import VacanciesBaseSerializer
-from vacancies.services import create_periodic_adding_vacancies_task, get_vacancies_queryset_by_query_type
+from vacancies.services import create_periodic_adding_vacancies_task, get_vacancies_queryset_by_query_params
 from vacancies.tasks import create_vacancy_at_time_chosen_by_user
 
 
@@ -56,19 +57,19 @@ class VacanciesViewsTests(TestCase):
         self.assertEqual(response.data, data)
 
     def test_musician_filter_view(self):
-        response = self.client.get(reverse('vacancies-list'), {'q': 'musicians'})
+        response = self.client.get(reverse('vacancies-list'), {'type': 'musicians'})
         self.assertEqual(response.status_code, 200)
         data = VacanciesBaseSerializer(MusicianVacancy.objects.all(), context={'view_action': 'list'}, many=True).data
         self.assertEqual(response.data, data)
 
     def test_band_filter_view(self):
-        response = self.client.get(reverse('vacancies-list'), {'q': 'bands'})
+        response = self.client.get(reverse('vacancies-list'), {'type': 'bands'})
         self.assertEqual(response.status_code, 200)
         data = VacanciesBaseSerializer(BandVacancy.objects.all(), context={'view_action': 'list'}, many=True).data
         self.assertEqual(response.data, data)
 
     def test_organizer_filter_view(self):
-        response = self.client.get(reverse('vacancies-list'), {'q': 'organizers'})
+        response = self.client.get(reverse('vacancies-list'), {'type': 'organizers'})
         self.assertEqual(response.status_code, 200)
         data = VacanciesBaseSerializer(OrganizerVacancy.objects.all(), context={'view_action': 'list'}, many=True).data
         self.assertEqual(response.data, data)
@@ -94,15 +95,15 @@ class VacanciesViewsTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_get_vacancies_queryset_by_query_type(self):
-        self.assertEqual(list(get_vacancies_queryset_by_query_type('musicians')),
+        self.assertEqual(list(get_vacancies_queryset_by_query_params(QueryDict('type=musicians'))),
                          list(MusicianVacancy.objects.with_related()))
-        self.assertEqual(list(get_vacancies_queryset_by_query_type('bands')), list(BandVacancy.objects.with_related()))
-        self.assertEqual(list(get_vacancies_queryset_by_query_type('organizers')),
+        self.assertEqual(list(get_vacancies_queryset_by_query_params(QueryDict('type=bands'))),
+                         list(BandVacancy.objects.with_related()))
+        self.assertEqual(list(get_vacancies_queryset_by_query_params(QueryDict('type=organizers'))),
                          list(OrganizerVacancy.objects.with_related()))
-        self.assertEqual(list(get_vacancies_queryset_by_query_type('')), list(
+        self.assertEqual(list(get_vacancies_queryset_by_query_params(QueryDict("type=''"))), list(
             chain(MusicianVacancy.objects.with_related(), BandVacancy.objects.with_related(),
                   OrganizerVacancy.objects.with_related())))
-
 
 class VacanciesServicesTests(TestCase):
 

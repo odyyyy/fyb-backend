@@ -10,7 +10,7 @@ from django_celery_beat.models import PeriodicTask, ClockedSchedule
 from vacancies.models import MusicianVacancy, BandVacancy, OrganizerVacancy
 
 
-def get_vacancies_queryset_by_query_params(query_params: QueryDict[str, Any]):
+def get_vacancies_queryset_by_query_params(query_params: QueryDict[str, Any]) :
     query_params = dict(query_params)
 
     filter_params = get_prepared_filter_params(query_params)
