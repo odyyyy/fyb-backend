@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+
+<h1>Chat</h1>
+
+<div id="messages"></div>
+
+<input type="text" id="messageInput">
+<button onclick="sendMessage()">Send</button>
+
+
+<script>
+
+    var ws = new WebSocket('ws://127.0.0.1:8000/ws/chat/{{ room_name }}/');
+    ws.onmessage = function (event) {
+
+        var messagesDiv = document.getElementById('messages');
+
+        var data = JSON.parse(event.data);
+
+        var message = data.sender + ': ' + data.message;
+        var messageElement = document.createElement('div');
+        messageElement.textContent = message;
+        messagesDiv.appendChild(messageElement);
+    };
+
+    ws.onclose = function (event) {
+        console.log('WebSocket connection closed');
+    };
+
+    function sendMessage() {
+        var messageInput = document.getElementById('messageInput');
+        var message = messageInput.value.trim();
+
+        if (message) {
+            ws.send(JSON.stringify({ message: message, sender: '{{ user.username }}' }));
+            messageInput.value = '';
+        } else {
+            console.log('Message cannot be empty');
+        }
+    }
+
+
+
+    $.ajax({
+	url: 'http://127.0.0.1:8000/chat?n={{ room_name }}',
+	method: 'get',
+	cache: false
+}).done(function(data) {
+
+    var data_from_api = data.messages;
+
+    for (var i = 0; i < data_from_api.length; i++) {
+        var message = data_from_api[i].sender + ': ' + data_from_api[i].text;
+        var messageElement = document.createElement('div');
+        messageElement.textContent = message;
+        document.getElementById('messages').appendChild(messageElement);
+    }
+
+});
+
+</script>
+
+</body>
+</html>

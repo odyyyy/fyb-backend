@@ -25,6 +25,9 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+
+    'daphne',
+
     'django.contrib.staticfiles',
     'django.contrib.sites',
 
@@ -45,12 +48,15 @@ INSTALLED_APPS = [
     'django_filters',
     'drf_spectacular',
 
+    'channels',
+
     # apps
     'users',
     'vacancies',
     'bands',
     'news',
     'notifications',
+    'chat',
 
 ]
 
@@ -59,6 +65,10 @@ REST_FRAMEWORK = {
         'django_filters.rest_framework.DjangoFilterBackend',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
 }
 
 MIDDLEWARE = [
@@ -121,6 +131,18 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'config.wsgi.application'
+
+# Channels
+ASGI_APPLICATION = 'config.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(os.getenv('REDIS_HOST'), 6379)],
+        }
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
@@ -255,7 +277,7 @@ LOGGING = {
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-EMAIL_HOST = 'smtp.yandex.ru'
+EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_PORT = 465
 EMAIL_USE_TLS = False
 EMAIL_USE_SSL = True

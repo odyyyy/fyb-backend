@@ -10,6 +10,7 @@ api_patterns = [
     path('bands/', include('bands.urls')),
     path('users/', include('users.urls')),
     path('news/', include('news.urls')),
+    path('chat/', include('chat.urls')),
 
 ]
 
