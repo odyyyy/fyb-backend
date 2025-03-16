@@ -3,10 +3,12 @@ services:
   app:
     build: .
     command: >
-      sh -c "python3 manage.py migrate &&
-             python3 manage.py runserver 0.0.0.0:8000"
+      sh -c "uv run manage.py migrate &&
+             uv run manage.py runserver 0.0.0.0:8000"
+
     volumes:
       - .:/app
+      - /app/.venv
     ports:
       - "8000:8000"
     env_file:
@@ -31,7 +33,7 @@ services:
     restart: always
     build:
       context: .
-    command: celery -A config worker -l INFO
+    command: uv run celery -A config worker -l INFO
     volumes:
       - .:/app
     container_name: celery
@@ -44,7 +46,7 @@ services:
     container_name: celery-beat
     build:
       context: .
-    command: celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    command: uv run celery -A config beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
     volumes:
       - .:/app
     depends_on:
@@ -57,7 +59,7 @@ services:
       - "5555:5555"
     build:
       context: .
-    command: celery -A config flower
+    command: uv run celery -A config flower
     volumes:
       - .:/app
     depends_on:
